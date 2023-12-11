@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.baiyinliang.finance.mapper.BondRateInfoDao">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.baiyinliang.finance.entity.BondRateInfo">
+        <id column="id" property="id" />
+        <result column="bond_code" property="bondCode" />
+        <result column="payment_date" property="paymentDate" />
+        <result column="rate" property="rate" />
+        <result column="create_time" property="createTime" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, bond_code, payment_date, rate, create_time
+    </sql>
+
+
+    <insert id="batchInsert" parameterType="com.baiyinliang.finance.entity.BondRateInfo">
+        insert into bond_rate_info(
+        <include refid="Base_Column_List"/>
+        )VALUES
+        <foreach collection="bondRateInfoList" item="item" separator=",">
+            (#{item.id},#{item.bondCode},#{item.paymentDate},#{item.rate},now()
+            )
+        </foreach>
+    </insert>
+
+
+    <select id="selectRecentlyBondRateList" resultType="com.baiyinliang.finance.entity.BondRateInfo">
+        <!--select * from bond_rate
+        where
+        DATE_FORMAT(payment_date,'%Y') <![CDATA[>=]]> DATE_FORMAT(CURRENT_DATE(),'%Y')
+        and
+        DATE_FORMAT(payment_date,'%Y') <![CDATA[<]]> DATE_FORMAT(DATE_ADD(CURRENT_DATE(),INTERVAL 1 YEAR),'%Y')
+        <if test="bondIds != null and bondIds.size()>0">
+            and bond_id in
+            <foreach collection="bondIds" item="id" index="index" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>-->
+        SELECT
+        <include refid="Base_Column_List" />
+        FROM
+        (
+        SELECT *, ROW_NUMBER() OVER (PARTITION BY bond_code ORDER BY payment_date asc) rowid
+        FROM bond_rate_info   WHERE   DATE_FORMAT(payment_date,'%Y') >= DATE_FORMAT(CURRENT_DATE(),'%Y')
+        ) TT
+        WHERE TT.rowid <![CDATA[<=]]> 1
+        <if test="bondCodeList != null and bondCodeList.size()>0">
+            and bond_code in
+            <foreach collection="bondCodeList" item="bondCode" index="index" open="(" close=")" separator=",">
+                #{bondCode}
+            </foreach>
+        </if>
+    </select>
+    <select id="selectLatestRateInfo" resultType="com.baiyinliang.finance.entity.BondRateInfo">
+        select id, bond_code, payment_date, rate from bond_rate_info where bond_code = #{bondCode} AND DATE_FORMAT(payment_date,'%Y') = DATE_FORMAT(CURRENT_DATE(),'%Y')
+        ORDER BY id desc LIMIT 0,1
+    </select>
+</mapper>

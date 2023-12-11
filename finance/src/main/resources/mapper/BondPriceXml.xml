@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.baiyinliang.finance.mapper.BondPriceDao">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.baiyinliang.finance.entity.BondPrice">
+        <result column="id" property="id" />
+        <result column="bond_id" property="bondId" />
+        <result column="bond_nm" property="bondNm" />
+        <result column="price" property="price" />
+        <result column="min_price" property="minPrice" />
+        <result column="max_price" property="maxPrice" />
+        <result column="redeem_price" property="redeemPrice" />
+        <result column="volume" property="volume" />
+        <result column="turnover_rt" property="turnoverRt" />
+        <result column="date" property="date" />
+        <result column="week" property="week" />
+        <result column="create_time" property="createTime" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        bond_id, bond_nm, price, min_price, max_price, redeem_price, volume, turnover_rt, date, week, create_time
+    </sql>
+
+    <select id="selectBondPricePeriod"  resultType="com.baiyinliang.finance.entity.BondPrice">
+        SELECT
+        <include refid="Base_Column_List" />
+        FROM
+        (
+        SELECT *, ROW_NUMBER() OVER (PARTITION BY bond_id ORDER BY date desc) rowid
+        FROM bond_price
+        ) TT
+        WHERE TT.rowid <![CDATA[<=]]> #{period}
+        <if test="bondIds != null and bondIds.size()>0">
+            and bond_id in
+            <foreach collection="bondIds" item="id" index="index" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="aaa" resultType="com.baiyinliang.finance.entity.BondPrice">
+        select * from bond_price
+    </select>
+</mapper>

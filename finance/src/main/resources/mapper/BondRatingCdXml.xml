@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.baiyinliang.finance.mapper.BondRatingCdDao">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.baiyinliang.finance.entity.BondRatingCd">
+        <id column="id" property="id" />
+        <result column="bond_code" property="bondCode" />
+        <result column="rating_cd" property="ratingCd" />
+        <result column="create_time" property="createTime" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, bond_code, rating_cd, create_time
+    </sql>
+
+
+    <insert id="batchInsert" parameterType="com.baiyinliang.finance.entity.BondRatingCd">
+        insert into bond_rating_cd(
+        <include refid="Base_Column_List"/>
+        )VALUES
+        <foreach collection="bondRatingCdList" item="item" separator=",">
+            (#{item.id},#{item.bondCode},#{item.ratingCd},now()
+            )
+        </foreach>
+    </insert>
+    <select id="selectBondRatingCdPeriod"  resultType="com.baiyinliang.finance.entity.BondRatingCd">
+        SELECT
+        <include refid="Base_Column_List" />
+        FROM
+        (
+        SELECT *, ROW_NUMBER() OVER (PARTITION BY bond_code ORDER BY date desc) rowid
+        FROM bond_price_info
+        ) TT
+        WHERE TT.rowid <![CDATA[<=]]> #{period}
+        <if test="bondCodeList != null and bondCodeList.size()>0">
+            and bond_code in
+            <foreach collection="bondCodeList" item="bondCode" index="index" open="(" close=")" separator=",">
+                #{bondCode}
+            </foreach>
+        </if>
+    </select>
+    <select id="selectLatestBondRatingCd" resultType="com.baiyinliang.finance.entity.BondRatingCd">
+        select bond_code,rating_cd from bond_rating_cd where bond_code = #{bondCode} ORDER BY id desc LIMIT 0,1 ;
+    </select>
+</mapper>

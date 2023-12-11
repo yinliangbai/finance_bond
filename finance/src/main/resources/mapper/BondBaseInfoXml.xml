@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.baiyinliang.finance.mapper.BondBaseInfoDao">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.baiyinliang.finance.entity.BondBaseInfo">
+        <id column="id" property="id" />
+        <result column="bond_code" property="bondCode" />
+        <result column="bond_nm" property="bondNm" />
+        <result column="price" property="price" />
+        <result column="list_dt" property="listDt" />
+        <result column="maturity_dt" property="maturityDt" />
+        <result column="orig_iss_amt" property="origIssAmt" />
+        <result column="redeem_price" property="redeemPrice" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+        <result column="flag" property="flag" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, bond_code, bond_nm, price, list_dt, maturity_dt, orig_iss_amt, redeem_price, create_time, update_time, flag
+    </sql>
+
+    <insert id="batchInsert" parameterType="com.baiyinliang.finance.entity.BondBaseInfo">
+        insert into bond_base_info(
+        <include refid="Base_Column_List"/>
+        )VALUES
+        <foreach collection="bonds" item="item" separator=",">
+            (#{item.id},#{item.bondCode},#{item.bondNm},#{item.price},#{item.listDt},#{item.maturityDt},#{item.origIssAmt},#{item.redeemPrice},now(),now(),1
+            )
+        </foreach>
+    </insert>
+
+    <select id="selectBaseInfoListByParams" resultType="com.baiyinliang.finance.entity.BondBaseInfo">
+        SELECT bond_code, bond_nm, price, list_dt, maturity_dt, orig_iss_amt, redeem_price, flag
+        from bond_base_info where flag = 1
+            <if test="param != null and param != ''">
+                and (bond_code like '%' #{param} '%' or bond_nm like '%' #{param} '%')
+            </if>
+            <if test="shMarket and !szMarket">
+                and bond_code like '11%'
+            </if>
+            <if test="szMarket and !shMarket">
+                and bond_code like '12%'
+            </if>
+    </select>
+
+</mapper>

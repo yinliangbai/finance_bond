@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.baiyinliang.finance.mapper.BondRateDao">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.baiyinliang.finance.entity.BondRate">
+<!--        <id column="id" property="id" />-->
+        <result column="id" property="id" />
+        <result column="bond_id" property="bondId" />
+        <result column="payment_date" property="paymentDate" />
+        <result column="rate" property="rate" />
+        <result column="create_time" property="createTime" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, bond_id, payment_date, rate, create_time
+    </sql>
+
+    <select id="selectBondRateList" resultType="com.baiyinliang.finance.entity.BondRate">
+        select * from bond_rate
+    </select>
+
+
+    <select id="selectRecentlyBondRateList" resultType="com.baiyinliang.finance.entity.BondRate">
+        <!--select * from bond_rate
+        where
+        DATE_FORMAT(payment_date,'%Y') <![CDATA[>=]]> DATE_FORMAT(CURRENT_DATE(),'%Y')
+        and
+        DATE_FORMAT(payment_date,'%Y') <![CDATA[<]]> DATE_FORMAT(DATE_ADD(CURRENT_DATE(),INTERVAL 1 YEAR),'%Y')
+        <if test="bondIds != null and bondIds.size()>0">
+            and bond_id in
+            <foreach collection="bondIds" item="id" index="index" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>-->
+        SELECT
+        <include refid="Base_Column_List" />
+        FROM
+        (
+        SELECT *, ROW_NUMBER() OVER (PARTITION BY bond_id ORDER BY payment_date asc) rowid
+        FROM bond_rate   WHERE   DATE_FORMAT(payment_date,'%Y') >= DATE_FORMAT(CURRENT_DATE(),'%Y')
+        ) TT
+        WHERE TT.rowid <![CDATA[<=]]> 1
+        <if test="bondIds != null and bondIds.size()>0">
+            and bond_id in
+            <foreach collection="bondIds" item="id" index="index" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+    </select>
+</mapper>

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.baiyinliang.finance.mapper.BondAmtInfoDao">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.baiyinliang.finance.entity.BondAmtInfo">
+        <id column="id" property="id"/>
+        <result column="bond_code" property="bondCode"/>
+        <result column="curr_iss_amt" property="currIssAmt"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, bond_code, curr_iss_amt, create_time
+    </sql>
+
+    <insert id="batchInsert" parameterType="com.baiyinliang.finance.entity.BondAmtInfo">
+        insert into bond_amt_info(
+        <include refid="Base_Column_List"/>
+        )VALUES
+        <foreach collection="bondAmtInfos" item="item" separator=",">
+            (#{item.id},#{item.bondCode},#{item.currIssAmt},now()
+            )
+        </foreach>
+    </insert>
+
+    <select id="selectLatestAmtList" resultType="com.baiyinliang.finance.entity.BondAmtInfo">
+        SELECT *
+        FROM (
+        SELECT *, ROW_NUMBER() OVER(PARTITION BY bond_code ORDER BY id) AS rn
+        FROM bond_amt_info
+        ) subquery
+        WHERE rn = 1
+        <if test="bondCodeList != null and bondCodeList.size()>0">
+            and bond_code in
+            <foreach collection="bondCodeList" item="bondCode" index="index" open="(" close=")" separator=",">
+                #{bondCode}
+            </foreach>
+        </if>
+    </select>
+    <select id="selectLatestAmt" resultType="com.baiyinliang.finance.entity.BondAmtInfo">
+        select bond_code,curr_iss_amt from bond_amt_info where bond_code = #{bondCode} ORDER BY id desc LIMIT 0,1 ;
+    </select>
+</mapper>
